@@ -1,0 +1,505 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
+
+:root {
+  --bg: #020c0c;
+  --panel-bg: #030f0f;
+  --pri: #00d4c0;
+  --mid: #006a62;
+  --dim: #0a2a28;
+  --dimmer: #061414;
+  --text: #7dfff6;
+  --green: #00ff88;
+  --red: #ff3344;
+  --muted: #cc2255;
+  --blue: #4488ff;
+  --gold: #ffcc00;
+  --org: #ff6600;
+  --org2: #ff9900;
+
+  --state-color: var(--green);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Consolas', 'Cascadia Code', monospace;
+  overflow: hidden;
+}
+
+.display-font {
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  font-weight: 700;
+}
+
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hud-top, .hud-grid, .hud-controls {
+  position: relative;
+  z-index: 1;
+}
+
+.hud-top { display: flex; justify-content: flex-end; align-items: center; padding: 12px 24px; }
+
+.status-pill {
+  border: 1px solid var(--mid);
+  color: var(--pri);
+  padding: 4px 12px;
+  border-radius: 2px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  font-weight: 600;
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+.status-pill.online { color: var(--green); border-color: var(--green); }
+.status-pill.error { color: var(--red); border-color: var(--red); }
+
+.hud-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr 420px;
+  gap: 14px;
+  padding: 0 24px;
+  height: calc(100% - 60px);
+}
+
+/* ── Bracket-cornered HUD card (ui.py _bracket portu) ──────────────────── */
+.hud-panel {
+  position: relative;
+  background: var(--panel-bg);
+  padding: 18px 16px 16px;
+  overflow: hidden;
+}
+
+.hud-panel::before,
+.hud-panel::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--mid);
+  transition: border-color 0.3s ease;
+}
+.hud-panel::before { top: 0; left: 0; border-top: 2px solid; border-left: 2px solid; }
+.hud-panel::after { bottom: 0; right: 0; border-bottom: 2px solid; border-right: 2px solid; }
+
+.hud-left { display: flex; flex-direction: column; gap: 14px; }
+.hud-left .widget-system { flex: 1; }
+
+.panel-title {
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--pri);
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--dim);
+}
+.widget-clock .panel-title { color: var(--gold); }
+
+.clock-time {
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+.clock-date { font-size: 11px; opacity: 0.75; letter-spacing: 1px; color: var(--text); margin-top: 4px; }
+
+.bar-row { display: flex; align-items: center; gap: 8px; font-size: 11px; margin-bottom: 9px; }
+.bar-row span:first-child { color: var(--mid); width: 46px; flex-shrink: 0; }
+.bar { flex: 1; height: 6px; background: var(--dimmer); border-radius: 0; overflow: hidden; }
+.bar-fill { height: 100%; width: 0%; background: var(--pri); transition: width 0.4s ease, background 0.3s ease; }
+.bar-pct { width: 34px; text-align: right; opacity: 0.9; font-variant-numeric: tabular-nums; color: var(--pri); }
+
+.bar-row.warn .bar-fill { background: var(--org); }
+.bar-row.crit .bar-fill { background: var(--red); }
+.bar-row.warn .bar-pct { color: var(--org); }
+.bar-row.crit .bar-pct { color: var(--red); }
+
+.hud-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+}
+
+.hero-title {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.hero-wordmark {
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 10px;
+  color: var(--pri);
+  text-shadow: 0 0 16px rgba(0, 212, 192, 0.35);
+}
+.hero-tagline {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--mid);
+  margin-top: 4px;
+}
+
+.orb-wrap {
+  width: 560px;
+  height: 560px;
+  position: relative;
+  margin-top: 40px;
+}
+#orb-canvas { width: 100%; height: 100%; display: block; }
+
+.wordmark {
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  color: var(--state-color);
+  transition: color 0.4s ease;
+}
+.agent-state {
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  opacity: 0.75;
+  text-transform: uppercase;
+  color: var(--state-color);
+  transition: color 0.4s ease;
+}
+
+.hud-right { display: flex; flex-direction: column; }
+.hud-right .panel-title { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+
+.panel-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--dim);
+  margin-bottom: 10px;
+}
+
+.wave-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 18px;
+}
+.wave-bars span {
+  width: 2px;
+  height: 3px;
+  background: var(--mid);
+  transition: height 0.12s ease, background 0.3s ease;
+}
+.wave-bars.active span { background: var(--pri); }
+.conversation-log { flex: 1; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.conversation-log .entry-user { color: var(--text); }
+.conversation-log .entry-jarvis { color: var(--pri); }
+.conversation-log .entry-error { color: var(--red); }
+
+.command-form { display: flex; gap: 8px; margin-top: 12px; }
+.command-form input {
+  flex: 1;
+  background: var(--dimmer);
+  border: 1px solid var(--mid);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 2px;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.command-form input:focus {
+  outline: none;
+  border-color: var(--pri);
+  box-shadow: 0 0 0 1px var(--pri), 0 0 12px rgba(0, 212, 192, 0.25);
+}
+
+.command-form button, .control-btn {
+  position: relative;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, currentColor 16%, transparent), color-mix(in srgb, currentColor 4%, transparent));
+  border: 1px solid color-mix(in srgb, currentColor 55%, transparent);
+  border-top-color: color-mix(in srgb, currentColor 80%, white 10%);
+  color: var(--pri);
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, currentColor 35%, transparent),
+    inset 0 -10px 16px -10px color-mix(in srgb, currentColor 25%, transparent),
+    0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease, background 0.2s ease;
+}
+.command-form button:hover, .control-btn:hover {
+  border-color: currentColor;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, currentColor 28%, transparent), color-mix(in srgb, currentColor 8%, transparent));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, currentColor 50%, transparent),
+    inset 0 -10px 18px -10px color-mix(in srgb, currentColor 35%, transparent),
+    0 0 14px color-mix(in srgb, currentColor 45%, transparent);
+}
+.command-form button:active, .control-btn:active {
+  transform: translateY(1px);
+}
+.control-btn.control-danger { border-color: color-mix(in srgb, var(--red) 55%, transparent); color: var(--red); }
+
+.hud-controls { display: flex; justify-content: center; gap: 12px; margin-top: 6px; }
+.hud-controls .control-btn { padding: 6px 12px; font-size: 11px; }
+
+.control-live {
+  border-color: var(--green);
+  color: var(--green);
+  cursor: default;
+  display: inline-flex;
+  align-items: center;
+}
+.control-live.offline { border-color: var(--red); color: var(--red); }
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 7px;
+  filter: drop-shadow(0 0 3px currentColor);
+  flex-shrink: 0;
+}
+.control-live .btn-icon { animation: icon-pulse 1.6s ease-in-out infinite; }
+.control-live.offline .btn-icon { animation: none; }
+
+@keyframes icon-pulse {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 3px currentColor); }
+  50% { opacity: 0.4; filter: drop-shadow(0 0 1px currentColor); }
+}
+
+.weather-placeholder {
+  font-size: 11px;
+  color: var(--mid);
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.weather-temp {
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--blue);
+}
+.weather-city {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--mid);
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+.weather-condition {
+  font-size: 12px;
+  color: var(--text);
+  margin-top: 6px;
+}
+.weather-detail {
+  font-size: 11px;
+  color: var(--text);
+  opacity: 0.8;
+  margin-top: 3px;
+}
+
+.wake-indicator {
+  opacity: 0.3;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  margin-left: 0.75rem;
+  color: var(--green);
+  transition: opacity 0.2s ease;
+}
+.wake-indicator.active {
+  opacity: 1;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+}
+
+/* ── Durum -> renk. hud-center'a yazilir, wordmark/agent-state buradan
+   miras alir (orb.js kendi ayri paletiyle canvas'i cizer). */
+#hud-center[data-state="idle"] { --state-color: var(--green); }
+#hud-center[data-state="listening"] { --state-color: var(--green); }
+#hud-center[data-state="thinking"] { --state-color: var(--gold); }
+#hud-center[data-state="speaking"] { --state-color: var(--blue); }
+#hud-center[data-state="error"] { --state-color: var(--red); }
+
+.debug-toggle {
+  margin-left: 12px;
+  background: transparent;
+  border: 1px solid var(--mid);
+  color: var(--mid);
+  font-size: 11px;
+  padding: 3px 8px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+
+.debug-panel {
+  position: fixed;
+  top: 48px;
+  right: 16px;
+  width: 420px;
+  height: 320px;
+  background: #041111;
+  border: 1px solid #0c2a28;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.debug-panel.hidden {
+  display: none;
+}
+
+.debug-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid #0c2a28;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.debug-panel-header button {
+  background: transparent;
+  border: 1px solid #0c2a28;
+  color: inherit;
+  cursor: pointer;
+  font-size: 10px;
+  padding: 2px 6px;
+  margin-left: 6px;
+}
+
+.debug-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px;
+  font-family: monospace;
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+
+.debug-log-line.stderr {
+  color: var(--red);
+}
+
+.debug-log-line.status {
+  color: var(--gold);
+}
+
+.debug-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.debug-body.hidden,
+.settings-body.hidden,
+#debug-restart.hidden {
+  display: none;
+}
+
+.debug-panel-header .debug-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.debug-panel-header .debug-tab {
+  background: transparent;
+  border: 1px solid #0c2a28;
+  color: var(--mid);
+  font-size: 10px;
+  padding: 3px 10px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+
+.debug-panel-header .debug-tab.active {
+  color: var(--pri);
+  border-color: var(--pri);
+}
+
+.settings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--mid);
+}
+
+.settings-field input,
+.settings-field select {
+  background: #041111;
+  border: 1px solid #0c2a28;
+  color: var(--text);
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.settings-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--mid);
+}
+
+.settings-save-btn {
+  background: transparent;
+  border: 1px solid var(--pri);
+  color: var(--pri);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.settings-firstrun-note {
+  font-size: 11px;
+  color: var(--gold);
+  line-height: 1.5;
+}
+
+.settings-firstrun-note.hidden {
+  display: none;
+}
+
+.debug-tabs .debug-tab.hidden {
+  display: none;
+}
+
+#debug-close.hidden {
+  display: none;
+}

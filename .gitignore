@@ -1,0 +1,18 @@
+# Python
+agent/venv/
+agent/__pycache__/
+agent/**/__pycache__/
+agent/.env
+agent/memory.json
+*.pyc
+agent-dist/
+build/pyinstaller/
+*.spec
+
+# Node / Electron
+shell/node_modules/
+shell/dist/
+shell/release/
+
+# OS
+Thumbs.db

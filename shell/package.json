@@ -1,0 +1,56 @@
+{
+  "name": "jarvis-shell",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "app.jarvis.desktop",
+    "productName": "Jarvis",
+    "artifactName": "Jarvis-Setup.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "agent-process.js",
+      "settings.js",
+      "renderer/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../agent-dist/agent",
+        "to": "agent"
+      },
+      {
+        "from": "../agent/.env.example",
+        "to": "agent/.env.example"
+      }
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "mhmmtmst",
+      "repo": "Jarvis-",
+      "releaseType": "release"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Jarvis",
+      "artifactName": "Jarvis-Setup.${ext}"
+    }
+  }
+}

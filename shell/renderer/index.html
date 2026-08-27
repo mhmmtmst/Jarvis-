@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <title>Jarvis</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+
+  <header class="hud-top">
+    <span id="connection-status" class="status-pill">CONNECTING</span>
+    <span id="wake-indicator" class="wake-indicator">ASİSTAN DİNLİYOR</span>
+    <button id="debug-toggle" type="button" class="debug-toggle">DEBUG</button>
+  </header>
+
+  <main class="hud-grid">
+    <section class="hud-left">
+      <div class="hud-panel widget-clock">
+        <h2 class="panel-title">TIME</h2>
+        <div id="clock-time" class="clock-time">--:--</div>
+        <div id="clock-date" class="clock-date">-- ------ ----</div>
+      </div>
+      <div class="hud-panel widget-weather">
+        <h2 class="panel-title">WEATHER</h2>
+        <div id="weather-body" class="weather-placeholder">Hava durumu aranıyor...</div>
+      </div>
+      <div class="hud-panel widget-system">
+        <h2 class="panel-title">SYSTEM STATUS</h2>
+        <div class="bar-row">
+          <span>CPU</span>
+          <div class="bar"><div id="bar-cpu" class="bar-fill"></div></div>
+          <span id="pct-cpu" class="bar-pct">--%</span>
+        </div>
+        <div class="bar-row">
+          <span>RAM</span>
+          <div class="bar"><div id="bar-ram" class="bar-fill"></div></div>
+          <span id="pct-ram" class="bar-pct">--%</span>
+        </div>
+        <div class="bar-row">
+          <span>DISK</span>
+          <div class="bar"><div id="bar-disk" class="bar-fill"></div></div>
+          <span id="pct-disk" class="bar-pct">--%</span>
+        </div>
+        <div class="bar-row">
+          <span>BATTERY</span>
+          <div class="bar"><div id="bar-battery" class="bar-fill"></div></div>
+          <span id="pct-battery" class="bar-pct">--%</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="hud-center" class="hud-center" data-state="idle">
+      <div class="hero-title">
+        <div class="hero-wordmark">J.A.R.V.I.S</div>
+        <div class="hero-tagline">YAPAY ZEKA SES ASİSTANI</div>
+      </div>
+      <div class="orb-wrap">
+        <canvas id="orb-canvas"></canvas>
+      </div>
+      <div class="wordmark">J.A.R.V.I.S</div>
+      <div id="agent-state" class="agent-state">idle</div>
+      <div class="hud-controls">
+        <span id="live-badge" class="control-btn control-live">
+          <span class="btn-icon">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5.7" y="1.2" width="4.6" height="7.6" rx="2.3" fill="currentColor" stroke="none"/>
+              <path d="M3.6 7.6a4.4 4.4 0 0 0 8.8 0"/>
+              <line x1="8" y1="12.2" x2="8" y2="14.6"/>
+              <line x1="5.3" y1="14.6" x2="10.7" y2="14.6"/>
+            </svg>
+          </span>LIVE
+        </span>
+        <button id="btn-pause" type="button" class="control-btn">
+          <span class="btn-icon">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+              <rect x="3.3" y="1.5" width="3.6" height="13" rx="1"/>
+              <rect x="9.1" y="1.5" width="3.6" height="13" rx="1"/>
+            </svg>
+          </span>PAUSE
+        </button>
+        <button id="btn-shutdown" type="button" class="control-btn control-danger">
+          <span class="btn-icon">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 1.2v6.3"/>
+              <path d="M3.9 3.6a6.1 6.1 0 1 0 8.2 0"/>
+            </svg>
+          </span>SHUTDOWN
+        </button>
+      </div>
+    </section>
+
+    <section class="hud-panel hud-right">
+      <div class="panel-title-row">
+        <h2 class="panel-title">CONVERSATION</h2>
+        <div id="wave-bars" class="wave-bars"></div>
+      </div>
+      <div id="conversation-log" class="conversation-log"></div>
+      <form id="command-form" class="command-form">
+        <input id="command-input" type="text" autocomplete="off" placeholder="Bir komut yaz..." />
+        <button type="submit">SEND</button>
+      </form>
+    </section>
+  </main>
+
+  <div id="debug-panel" class="debug-panel hidden">
+    <div class="debug-panel-header">
+      <div class="debug-tabs">
+        <button id="tab-debug" type="button" class="debug-tab active">DEBUG</button>
+        <button id="tab-settings" type="button" class="debug-tab">SETTINGS</button>
+      </div>
+      <button id="debug-restart" type="button">YENİDEN BAŞLAT</button>
+      <button id="debug-close" type="button">✕</button>
+    </div>
+    <div id="debug-body" class="debug-body">
+      <div id="debug-log" class="debug-log"></div>
+    </div>
+    <div id="settings-body" class="settings-body hidden">
+      <label class="settings-field">
+        <span>GEMINI API ANAHTARI</span>
+        <input id="settings-gemini-key" type="password" autocomplete="off" />
+      </label>
+      <label class="settings-field">
+        <span>SES</span>
+        <select id="settings-voice">
+          <option value="">—</option>
+          <option value="Charon">Charon</option>
+          <option value="Puck">Puck</option>
+          <option value="Aoede">Aoede</option>
+          <option value="Kore">Kore</option>
+          <option value="Fenrir">Fenrir</option>
+          <option value="Leda">Leda</option>
+          <option value="Orus">Orus</option>
+          <option value="Zephyr">Zephyr</option>
+        </select>
+      </label>
+      <label class="settings-field">
+        <span>MODEL</span>
+        <input id="settings-model" type="text" autocomplete="off" />
+      </label>
+      <label class="settings-field">
+        <span>HAVA DURUMU KONUMU</span>
+        <input id="settings-weather-location" type="text" autocomplete="off" />
+      </label>
+      <label class="settings-field">
+        <span>RAPOR PROJELERİ</span>
+        <input id="settings-report-projects" type="text" autocomplete="off" />
+      </label>
+      <label class="settings-checkbox-row">
+        <input id="settings-launch-on-startup" type="checkbox" />
+        <span>Windows başlangıcında otomatik aç</span>
+      </label>
+      <div id="settings-firstrun-note" class="settings-firstrun-note hidden">
+        İlk kurulum: Gemini API anahtarınızı girip kaydedin. Ücretsiz anahtar için aistudio.google.com → Get API Key.
+      </div>
+      <button id="settings-save" type="button" class="settings-save-btn">KAYDET VE YENİDEN BAŞLAT</button>
+    </div>
+  </div>
+
+  <script src="protocol.js"></script>
+  <script src="bg.js"></script>
+  <script src="orb.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
