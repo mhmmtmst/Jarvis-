@@ -13,6 +13,8 @@ class JarvisConfig:
     gemini_voice: str
     weather_location: str
     report_projects: str
+    mode: str
+    search_root: str
 
 
 def load_config(env: dict | None = None) -> JarvisConfig:
@@ -30,4 +32,6 @@ def load_config(env: dict | None = None) -> JarvisConfig:
         gemini_voice=env.get("JARVIS_GEMINI_VOICE", "Kore"),
         weather_location=env.get("JARVIS_WEATHER_LOCATION", ""),
         report_projects=env.get("JARVIS_REPORT_PROJECTS", ""),
+        mode=env.get("JARVIS_MODE", "rahat"),
+        search_root=env.get("JARVIS_SEARCH_ROOT", ""),
     )

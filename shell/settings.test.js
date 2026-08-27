@@ -71,6 +71,10 @@ test('MANAGED_KEYS includes GEMINI_API_KEY', () => {
   assert.ok(MANAGED_KEYS.includes('GEMINI_API_KEY'));
 });
 
+test('MANAGED_KEYS includes JARVIS_MODE', () => {
+  assert.ok(MANAGED_KEYS.includes('JARVIS_MODE'));
+});
+
 test('readSettings picks up GEMINI_API_KEY from the .env text via parseEnvFile/updateEnvFile round trip', () => {
   const text = 'GEMINI_API_KEY=secret-abc\nJARVIS_GEMINI_VOICE=Kore';
   assert.deepEqual(parseEnvFile(text), {

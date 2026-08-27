@@ -4,7 +4,7 @@ import logging
 from google.genai import types
 
 from agent.memory import format_memory_for_prompt, load_memory
-from agent.persona import JARVIS_PERSONA
+from agent.persona import build_persona
 from agent.tools.registry import ToolSpec
 
 logger = logging.getLogger(__name__)
@@ -15,23 +15,28 @@ class LiveSession:
     (düz dict) dışarı verir; bu sayede ws_server bu modülün WebSocket'ten
     hiç haberdar olmasına gerek kalmadan olayları frame'e çevirebilir."""
 
-    def __init__(self, client, model: str, voice: str, tools: dict[str, ToolSpec], on_event, memory_loader=None):
+    def __init__(
+        self, client, model: str, voice: str, tools: dict[str, ToolSpec], on_event,
+        memory_loader=None, mode: str = "rahat",
+    ):
         self._client = client
         self._model = model
         self._voice = voice
         self._tools = tools
         self._on_event = on_event
         self._memory_loader = memory_loader if memory_loader is not None else load_memory
+        self._mode = mode
         self._session = None
 
     def _build_system_instruction(self) -> str:
         # Live API'de system_instruction sadece baglanti kurulurken bir kere
         # gonderilir (oturum icinde canli guncellenemez); o yuzden hafiza
         # burada, her yeniden baglantida taze okunur.
+        persona = build_persona(self._mode)
         memory_block = format_memory_for_prompt(self._memory_loader())
         if not memory_block:
-            return JARVIS_PERSONA
-        return f"{JARVIS_PERSONA}\n\n{memory_block}"
+            return persona
+        return f"{persona}\n\n{memory_block}"
 
     def _build_config(self) -> types.LiveConnectConfig:
         tool = types.Tool(
@@ -65,6 +70,7 @@ class LiveSession:
         async with self._client.aio.live.connect(model=self._model, config=config) as session:
             logger.info("Gemini Live oturumu kuruldu (model=%s)", self._model)
             self._session = session
+            await self._on_event({"type": "session_ready"})
             async for message in session.receive():
                 await self._handle_message(message)
 

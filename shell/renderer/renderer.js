@@ -340,6 +340,7 @@ const settingsVoice = document.getElementById('settings-voice');
 const settingsModel = document.getElementById('settings-model');
 const settingsWeatherLocation = document.getElementById('settings-weather-location');
 const settingsReportProjects = document.getElementById('settings-report-projects');
+const settingsMode = document.getElementById('settings-mode');
 const settingsLaunchOnStartup = document.getElementById('settings-launch-on-startup');
 const settingsSave = document.getElementById('settings-save');
 const settingsGeminiKey = document.getElementById('settings-gemini-key');
@@ -380,6 +381,7 @@ async function loadSettingsForm() {
   settingsModel.value = settings.JARVIS_GEMINI_MODEL || '';
   settingsWeatherLocation.value = settings.JARVIS_WEATHER_LOCATION || '';
   settingsReportProjects.value = settings.JARVIS_REPORT_PROJECTS || '';
+  settingsMode.value = settings.JARVIS_MODE || 'rahat';
   settingsLaunchOnStartup.checked = Boolean(launchOnStartup);
 }
 
@@ -449,6 +451,7 @@ settingsSave.addEventListener('click', () => {
     JARVIS_GEMINI_MODEL: settingsModel.value,
     JARVIS_WEATHER_LOCATION: settingsWeatherLocation.value,
     JARVIS_REPORT_PROJECTS: settingsReportProjects.value,
+    JARVIS_MODE: settingsMode.value,
   });
   if (firstRunLocked && settingsGeminiKey.value.trim()) {
     exitFirstRunLock();

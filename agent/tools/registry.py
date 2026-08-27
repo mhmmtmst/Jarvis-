@@ -4,6 +4,7 @@ from typing import Callable
 
 from agent.memory import delete_memory, recall, remember
 from agent.tools.browser import open_browser, play_media
+from agent.tools.files import search_files
 from agent.tools.open_app import open_app
 from agent.tools.report import get_projects_report
 from agent.tools.screen import read_screen
@@ -24,6 +25,7 @@ def build_tool_registry(
     client,
     weather_default_location: str = "",
     report_projects: list[tuple[str, str]] | None = None,
+    search_default_root: str = "",
 ) -> dict[str, ToolSpec]:
     return {
         "open_app": ToolSpec(
@@ -64,7 +66,13 @@ def build_tool_registry(
         ),
         "run_command": ToolSpec(
             name="run_command",
-            description="Kullanıcının bilgisayarında bir PowerShell komutu çalıştırır ve çıktısını döner. Bilinen tehlikeli komut kalıpları (format, shutdown, disk silme vb.) engellenir.",
+            description=(
+                "Kullanıcının bilgisayarında bir PowerShell komutu çalıştırır ve çıktısını döner. "
+                "Bilinen tehlikeli komut kalıpları (format, shutdown, disk silme vb.) tamamen engellenir. "
+                "Dosya silme veya süreç/servis durdurma gibi riskli ama tamamen yasak olmayan komutlarda "
+                "sonuç status='needs_confirmation' döner — bu durumda kullanıcıdan sözlü onay al, "
+                "onaylarsa AYNI komutu confirmed=true ile tekrar çağır."
+            ),
             parameters={
                 "type": "object",
                 "properties": {
@@ -75,6 +83,10 @@ def build_tool_registry(
                     "cwd": {
                         "type": "string",
                         "description": "Komutun çalışacağı klasör (opsiyonel, verilmezse mevcut klasör kullanılır)",
+                    },
+                    "confirmed": {
+                        "type": "boolean",
+                        "description": "Kullanıcı riskli komutu onayladıysa true geç (varsayılan false)",
                     },
                 },
                 "required": ["command"],
@@ -205,5 +217,29 @@ def build_tool_registry(
             ),
             parameters={"type": "object", "properties": {}, "required": []},
             handler=partial(get_projects_report, projects=report_projects or []),
+        ),
+        "search_files": ToolSpec(
+            name="search_files",
+            description=(
+                "Bir klasör ağacında dosya adında veya metin içeriğinde bir kelime/ifadeyi arar. "
+                "Kullanıcı 'X ile ilgili dosyayı bul', 'geçen hafta yazdığım Y nerede' gibi bir şey "
+                "sorarsa kullan. root verilmezse kullanıcının yapılandırılmış varsayılan arama "
+                "klasöründe (veya o da yoksa home dizininde) arar."
+            ),
+            parameters={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Aranacak kelime/ifade (dosya adında veya içeriğinde)",
+                    },
+                    "root": {
+                        "type": "string",
+                        "description": "Aramanın yapılacağı klasör (opsiyonel)",
+                    },
+                },
+                "required": ["query"],
+            },
+            handler=partial(search_files, default_root=search_default_root),
         ),
     }

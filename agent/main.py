@@ -23,6 +23,7 @@ def build_components() -> tuple[JarvisServer, LiveSession, WakeWordListener]:
         client,
         weather_default_location=config.weather_location,
         report_projects=report_projects,
+        search_default_root=config.search_root,
     )
 
     server = JarvisServer(
@@ -37,6 +38,7 @@ def build_components() -> tuple[JarvisServer, LiveSession, WakeWordListener]:
         voice=config.gemini_voice,
         tools=tools,
         on_event=server.handle_live_event,
+        mode=config.mode,
     )
 
     wake_word_listener = WakeWordListener(

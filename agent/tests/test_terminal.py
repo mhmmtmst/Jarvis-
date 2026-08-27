@@ -1,7 +1,7 @@
 import subprocess
 from types import SimpleNamespace
 
-from agent.tools.terminal import is_dangerous, run_command
+from agent.tools.terminal import is_dangerous, is_risky, run_command
 
 
 def test_is_dangerous_detects_format_command():
@@ -146,6 +146,50 @@ def test_run_command_handles_unexpected_runner_exception():
     result = run_command("dir", runner=runner)
 
     assert result["status"] == "error"
+
+
+def test_is_risky_detects_single_file_delete():
+    assert is_risky("del gecici.txt") is True
+    assert is_risky("Remove-Item rapor.txt") is True
+
+
+def test_is_risky_detects_process_kill():
+    assert is_risky("taskkill /IM notepad.exe /F") is True
+    assert is_risky("Stop-Process -Name chrome") is True
+
+
+def test_is_risky_allows_safe_commands():
+    assert is_risky("git status") is False
+    assert is_risky("dir") is False
+    assert is_risky("npm install") is False
+
+
+def test_is_risky_does_not_flag_already_dangerous_commands():
+    # zaten hard-block'lanan komutlar risky katmanına da ayrıca girmemeli,
+    # is_dangerous zaten bunları önce yakalıyor
+    assert is_risky("Remove-Item -Recurse -Force C:\\") is False
+
+
+def test_run_command_needs_confirmation_for_risky_command_without_calling_runner():
+    calls = []
+    def runner():
+        calls.append(1)
+        return SimpleNamespace(stdout="", stderr="", returncode=0)
+
+    result = run_command("del gecici.txt", runner=runner)
+
+    assert result["status"] == "needs_confirmation"
+    assert calls == []
+
+
+def test_run_command_runs_risky_command_when_confirmed():
+    def runner():
+        return SimpleNamespace(stdout="silindi", stderr="", returncode=0)
+
+    result = run_command("del gecici.txt", runner=runner, confirmed=True)
+
+    assert result["status"] == "ok"
+    assert "silindi" in result["output"]
 
 
 def test_run_command_handles_turkish_characters_via_real_subprocess():

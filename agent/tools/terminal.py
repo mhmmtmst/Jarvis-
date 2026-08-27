@@ -21,17 +21,48 @@ _DANGEROUS_PATTERNS = [
 ]
 
 
+_RISKY_PATTERNS = [
+    r"\b(del|erase)\b",
+    r"\bremove-item\b",
+    r"\btaskkill\b",
+    r"\bstop-process\b",
+    r"\bstop-service\b",
+    r"\bnet\s+stop\b",
+]
+
+
 def is_dangerous(command: str) -> bool:
     lowered = command.lower()
     return any(re.search(pattern, lowered) for pattern in _DANGEROUS_PATTERNS)
 
 
-def run_command(command: str, cwd: str | None = None, runner=None) -> dict:
+def is_risky(command: str) -> bool:
+    """Tamamen engellenmeyen ama önemli sonuç doğurabilecek (dosya silme,
+    süreç/servis durdurma) komutlar — çalıştırılmadan önce onay ister.
+    Zaten is_dangerous ile hard-block'lanan komutlar bu katmana ayrıca
+    girmez (örn. -Recurse -Force zaten dangerous)."""
+    if is_dangerous(command):
+        return False
+    lowered = command.lower()
+    return any(re.search(pattern, lowered) for pattern in _RISKY_PATTERNS)
+
+
+def run_command(command: str, cwd: str | None = None, runner=None, confirmed: bool = False) -> dict:
     """PowerShell üzerinden komut çalıştırır. `runner` testte enjekte
     edilir; gerçekte parametresiz bir closure olarak subprocess.run'ı
     komut/cwd'yi kapsayarak çağırır."""
     if is_dangerous(command):
         return {"status": "blocked", "message": "Bu komut güvenlik nedeniyle engellendi."}
+
+    if is_risky(command) and not confirmed:
+        return {
+            "status": "needs_confirmation",
+            "message": (
+                f"'{command}' potansiyel olarak riskli bir komut (dosya/süreç/servis "
+                "durduruyor veya siliyor). Kullanıcıdan sözlü onay al, onaylarsa AYNI "
+                "komutu confirmed=true ile tekrar çağır."
+            ),
+        }
 
     if runner is None:
         def runner():

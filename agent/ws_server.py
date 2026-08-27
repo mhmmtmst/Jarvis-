@@ -23,6 +23,7 @@ class JarvisServer:
         self.wake_word_listener = None
         self._latest_weather = None
         self._browser_location: str | None = None
+        self._briefed = False
 
     async def _handler(self, websocket) -> None:
         self._clients.add(websocket)
@@ -155,9 +156,28 @@ class JarvisServer:
             "Kısaca bir kapanış cümlesi söyle (örn. 'Başka bir şey olursa haber ederim.'), başka bir şey ekleme."
         )
 
+    async def handle_startup_briefing(self) -> None:
+        # Gemini Live baglantisi kurulunca (agent surecinin omru boyunca SADECE
+        # bir kez) kisa bir "gunaydin brifingi" yaptir — get_weather ve
+        # get_projects_report tool'lari zaten kayitli, model bunlari kendi
+        # cagirip sonucu dogal bir karsilamaya cevirir.
+        if self._briefed:
+            return
+        self._briefed = True
+        await self._broadcast_json({"type": "status", "state": "thinking"})
+        await self._send_text_safely(
+            "[SISTEM] Jarvis az önce başlatıldı, kullanıcı henüz bir şey söylemedi. "
+            "get_weather ve get_projects_report araçlarını çağırıp kısa, doğal bir "
+            "günaydın brifingi ver: hava durumunu tek cümleyle özetle, projelerden "
+            "sadece gerçekten dikkat gerektiren (commit'lenmemiş değişikliği olan) "
+            "varsa bahset, hepsi temizse projelerden hiç bahsetme. Uzun tutma."
+        )
+
     async def handle_live_event(self, event: dict) -> None:
         etype = event["type"]
-        if etype == "audio_chunk":
+        if etype == "session_ready":
+            await self.handle_startup_briefing()
+        elif etype == "audio_chunk":
             if not self._speaking:
                 self._speaking = True
                 await self._broadcast_json({"type": "status", "state": "speaking"})

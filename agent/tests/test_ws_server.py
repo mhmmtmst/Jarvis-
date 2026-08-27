@@ -210,6 +210,30 @@ def test_handle_conversation_end_sends_system_nudge_for_closing_remark():
     assert sent_text.startswith("[SISTEM]")
 
 
+def test_handle_live_event_session_ready_sends_startup_briefing_nudge():
+    server = make_server()
+    ws = FakeWebSocket()
+    server._clients.add(ws)
+
+    asyncio.run(server.handle_live_event({"type": "session_ready"}))
+
+    assert len(server.live_session.calls) == 1
+    call_type, sent_text = server.live_session.calls[0]
+    assert call_type == "send_text"
+    assert sent_text.startswith("[SISTEM]")
+
+
+def test_handle_live_event_session_ready_only_briefs_once():
+    server = make_server()
+    ws = FakeWebSocket()
+    server._clients.add(ws)
+
+    asyncio.run(server.handle_live_event({"type": "session_ready"}))
+    asyncio.run(server.handle_live_event({"type": "session_ready"}))
+
+    assert len(server.live_session.calls) == 1
+
+
 def test_handle_live_event_transcript_broadcasts_transcript():
     server = make_server()
     ws = FakeWebSocket()

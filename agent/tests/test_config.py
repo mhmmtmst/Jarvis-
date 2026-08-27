@@ -10,6 +10,8 @@ def test_load_config_reads_provided_env_mapping():
         "JARVIS_GEMINI_VOICE": "Puck",
         "JARVIS_WEATHER_LOCATION": "Safranbolu, Karabük",
         "JARVIS_REPORT_PROJECTS": "Odakla:C:/Odakla,Jarvis:C:/jarvis",
+        "JARVIS_MODE": "calisma",
+        "JARVIS_SEARCH_ROOT": "C:/Users/x/Documents",
     }
 
     config = load_config(env=env)
@@ -21,6 +23,8 @@ def test_load_config_reads_provided_env_mapping():
     assert config.gemini_voice == "Puck"
     assert config.weather_location == "Safranbolu, Karabük"
     assert config.report_projects == "Odakla:C:/Odakla,Jarvis:C:/jarvis"
+    assert config.mode == "calisma"
+    assert config.search_root == "C:/Users/x/Documents"
 
 
 def test_load_config_has_sane_defaults_when_env_is_empty():
@@ -33,6 +37,8 @@ def test_load_config_has_sane_defaults_when_env_is_empty():
     assert config.gemini_voice == "Kore"
     assert config.weather_location == ""
     assert config.report_projects == ""
+    assert config.mode == "rahat"
+    assert config.search_root == ""
 
 
 def test_load_config_reads_env_file_from_jarvis_env_path(tmp_path, monkeypatch):

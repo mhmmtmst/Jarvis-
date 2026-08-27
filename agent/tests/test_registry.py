@@ -24,6 +24,7 @@ def test_registry_contains_all_tools():
         "delete_memory",
         "get_weather",
         "get_projects_report",
+        "search_files",
     }
 
 
@@ -120,6 +121,13 @@ def test_get_projects_report_tool_spec_takes_no_parameters():
 
     assert spec.parameters["properties"] == {}
     assert spec.parameters["required"] == []
+
+
+def test_search_files_tool_spec_declares_required_query_and_optional_root():
+    spec = build_tool_registry(make_fake_client())["search_files"]
+
+    assert spec.parameters["required"] == ["query"]
+    assert "root" in spec.parameters["properties"]
 
 
 def test_get_projects_report_handler_is_bound_to_the_given_projects():

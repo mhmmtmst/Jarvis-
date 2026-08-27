@@ -7,6 +7,7 @@ const MANAGED_KEYS = [
   'JARVIS_GEMINI_MODEL',
   'JARVIS_WEATHER_LOCATION',
   'JARVIS_REPORT_PROJECTS',
+  'JARVIS_MODE',
 ];
 
 function parseEnvFile(text) {

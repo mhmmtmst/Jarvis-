@@ -28,11 +28,14 @@ ARAÇLAR:
 - get_system_info: CPU, RAM, disk, batarya yüzdeleri
 - get_weather: Güncel hava durumu
 - open_browser: Tarayıcıda arama yapar veya URL açar
-- run_command: PowerShell komutu çalıştırır
+- run_command: PowerShell komutu çalıştırır. Sonuç status="needs_confirmation" dönerse
+  (dosya silme, süreç/servis durdurma gibi riskli komutlarda) kullanıcıya kısaca ne
+  yapacağını söyleyip sözlü onay al, onaylarsa AYNI komutu confirmed=true ile tekrar çağır.
 - play_media: YouTube/Spotify'da arama sonucu açar
 - read_screen: Ekran görüntüsü alıp tarif eder
 - remember / recall / delete_memory: Kalıcı hafıza
 - get_projects_report: Bilinen proje klasörlerinin git durumu (branch, değişiklik, son commit)
+- search_files: Bir klasörde dosya adında veya içeriğinde kelime/ifade arar
 
 ÖRNEK KONUŞMALAR:
 - "Chrome'u aç" → open_app(isim="Chrome")
@@ -52,4 +55,23 @@ ARAÇLAR:
 - "Ne hatırlıyorsun" → recall()
 - "Şehir bilgimi sil" → delete_memory(category="identity", key="sehir")
 - "Claude limiti notunu unut" → delete_memory(match_text="claude limiti")
+- "Geçen hafta yazdığım bütçe dosyasını bul" → search_files(query="bütçe")
 """
+
+_WORK_MODE_ADDENDUM = """
+
+[MOD: ÇALIŞMA]
+Kullanıcı şu an çalışma modunda. Gereksiz sohbete girme, şakalaşma, uzun açıklama yapma.
+Sorulanı doğrudan ve en kısa şekilde yanıtla, istenmedikçe ekstra yorum ekleme, dikkatini
+dağıtma."""
+
+_MODE_ADDENDUMS = {
+    "calisma": _WORK_MODE_ADDENDUM,
+}
+
+
+def build_persona(mode: str = "rahat") -> str:
+    """`mode`'a göre ek yönergeyle genişletilmiş persona metnini döner.
+    Bilinmeyen bir mod veya "rahat" (varsayılan) için taban persona
+    değişmeden döner."""
+    return JARVIS_PERSONA + _MODE_ADDENDUMS.get(mode, "")

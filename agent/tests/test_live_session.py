@@ -394,6 +394,37 @@ def test_run_appends_formatted_memory_to_system_instruction_when_present():
     assert "identity/isim: Muhammet" in config.system_instruction
 
 
+def test_run_uses_work_mode_persona_when_mode_is_calisma():
+    from agent.persona import build_persona
+
+    session = FakeSession(messages=[])
+    client = FakeClient(session)
+    async def on_event(event):
+        pass
+
+    live = LiveSession(
+        client=client, model="m", voice="Kore", tools={}, on_event=on_event,
+        memory_loader=lambda: {}, mode="calisma",
+    )
+    asyncio.run(live.run())
+
+    config = client.aio.live.connect_calls[0]["config"]
+    assert config.system_instruction == build_persona("calisma")
+
+
+def test_run_emits_session_ready_event_after_connecting():
+    session = FakeSession(messages=[])
+    client = FakeClient(session)
+    events = []
+    async def on_event(event):
+        events.append(event)
+
+    live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
+    asyncio.run(live.run())
+
+    assert {"type": "session_ready"} in events
+
+
 def test_run_logs_when_live_session_connects(caplog):
     session = FakeSession(messages=[])
     client = FakeClient(session)

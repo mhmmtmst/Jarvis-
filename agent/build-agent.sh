@@ -67,9 +67,18 @@ echo "==> On kosullar kuruluyor (pyinstaller + Pillow)..."
 # --exclude-module pytest:
 #   Test bagimliligi, uretim bundle'inda isi yok.
 #
-# openwakeword KASITLI olarak yok: requirements.txt'de listeli ama venv'de
-# kurulu degil ve agent/wake_word.py'deki OpenWakeWordDetector su an aktif
-# kullanilmayan olu kod. --collect-all openwakeword eklenirse build patlar.
+# --exclude-module openwakeword/onnxruntime/scikit-learn/scipy:
+#   ZORUNLU (torch/whisper ile AYNI bug sinifi) — agent/wake_word.py'deki
+#   OpenWakeWordDetector su an aktif kullanilmayan olu kod, ama __init__
+#   icinde fonksiyon govdesinde `from openwakeword.model import Model` var.
+#   openwakeword requirements.txt'de listeli oldugu icin (venv'e gercekten
+#   kuruluysa) PyInstaller bu fonksiyon-ici importu da statik olarak takip
+#   edip openwakeword + onnxruntime (36MB) + scikit-learn (13MB) + scipy
+#   (47MB+20MB libs) bundle'a sokuyor — toplam ~120MB tamamen olu agirlik.
+#   Jarvis bu kod yoluna HIC girmiyor: wake_word.py'de gercekte kullanilan
+#   tek dedektor _WAKE_PATTERN tabanli metin eslesmesi (recognize_google
+#   ciktisinda "asistan" kelimesini arar), OpenWakeWordDetector hic
+#   instantiate edilmiyor.
 echo "==> PyInstaller build calisiyor..."
 ./agent/venv/Scripts/pyinstaller.exe \
   --name agent \
@@ -84,6 +93,10 @@ echo "==> PyInstaller build calisiyor..."
   --exclude-module numba \
   --exclude-module llvmlite \
   --exclude-module tiktoken \
+  --exclude-module openwakeword \
+  --exclude-module onnxruntime \
+  --exclude-module sklearn \
+  --exclude-module scipy \
   --exclude-module pytest \
   --noconfirm \
   agent_entry.py
