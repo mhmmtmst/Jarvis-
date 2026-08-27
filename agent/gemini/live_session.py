@@ -16,17 +16,17 @@ class LiveSession:
     hiç haberdar olmasına gerek kalmadan olayları frame'e çevirebilir."""
 
     def __init__(
-        self, client, model: str, voice: str, tools: dict[str, ToolSpec], on_event,
+        self, client, model: str, tools: dict[str, ToolSpec], on_event,
         memory_loader=None, mode: str = "rahat",
     ):
         self._client = client
         self._model = model
-        self._voice = voice
         self._tools = tools
         self._on_event = on_event
         self._memory_loader = memory_loader if memory_loader is not None else load_memory
         self._mode = mode
         self._session = None
+        self._pending_agent_text = ""
 
     def _build_system_instruction(self) -> str:
         # Live API'de system_instruction sadece baglanti kurulurken bir kere
@@ -50,18 +50,12 @@ class LiveSession:
             ]
         )
         return types.LiveConnectConfig(
-            response_modalities=["AUDIO"],
+            response_modalities=["TEXT"],
             system_instruction=self._build_system_instruction(),
-            speech_config=types.SpeechConfig(
-                voice_config=types.VoiceConfig(
-                    prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=self._voice)
-                )
-            ),
             tools=[tool],
             realtime_input_config=types.RealtimeInputConfig(
                 automatic_activity_detection=types.AutomaticActivityDetection(disabled=True)
             ),
-            output_audio_transcription=types.AudioTranscriptionConfig(),
             input_audio_transcription=types.AudioTranscriptionConfig(),
         )
 
@@ -106,15 +100,16 @@ class LiveSession:
         if content.input_transcription is not None and content.input_transcription.text:
             await self._on_event({"type": "transcript", "role": "user", "text": content.input_transcription.text})
 
-        if content.output_transcription is not None and content.output_transcription.text:
-            await self._on_event({"type": "transcript", "role": "agent", "text": content.output_transcription.text})
-
         if content.model_turn is not None:
             for part in content.model_turn.parts or []:
-                if part.inline_data is not None and part.inline_data.data:
-                    await self._on_event({"type": "audio_chunk", "data": part.inline_data.data})
+                if part.text:
+                    self._pending_agent_text += part.text
+                    await self._on_event({"type": "transcript", "role": "agent", "text": part.text})
 
         if content.turn_complete:
+            if self._pending_agent_text:
+                await self._on_event({"type": "agent_text_complete", "text": self._pending_agent_text})
+            self._pending_agent_text = ""
             await self._on_event({"type": "turn_complete"})
 
     async def _handle_tool_call(self, tool_call) -> None:

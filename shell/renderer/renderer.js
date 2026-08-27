@@ -38,6 +38,11 @@ function stopPlaybackImmediately() {
   });
   scheduledSources = [];
   nextPlaybackTime = 0;
+  // Tarayıcının kendi speechSynthesis fallback sesi de (varsa) hemen kesilmeli
+  // — Edge-TTS parçaları için kesme artık gerçek çalma süresince çalıştığı
+  // için (bkz. ws_server._synthesize_and_broadcast paced gönderim) bu yol da
+  // artık gerçekten tetiklenebiliyor.
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
 const statusEl = document.getElementById('connection-status');
@@ -65,7 +70,6 @@ const input = document.getElementById('command-input');
 const pauseBtn = document.getElementById('btn-pause');
 const shutdownBtn = document.getElementById('btn-shutdown');
 
-const bgRenderer = new window.BackgroundRenderer(document.getElementById('bg-canvas'));
 const orbRenderer = new window.OrbRenderer(document.getElementById('orb-canvas'));
 
 let paused = false;
@@ -91,14 +95,24 @@ setInterval(animateWaveBars, 110);
 
 function setAgentState(state) {
   hudCenter.dataset.state = state;
-  agentStateEl.textContent = state;
+  agentStateEl.textContent = window.jarvisStateLabels.describeAgentState(state);
   orbRenderer.setState(state);
 }
 
 function appendLog(kind, text) {
   const line = document.createElement('div');
-  line.className = `entry-${kind}`;
-  line.textContent = text;
+  line.className = `log-line entry-${kind}`;
+
+  const speaker = document.createElement('div');
+  speaker.className = 'log-speaker';
+  speaker.textContent = kind === 'user' ? 'sen' : kind === 'error' ? 'hata' : 'jarvis';
+
+  const body = document.createElement('div');
+  body.className = 'log-text';
+  body.textContent = text;
+
+  line.appendChild(speaker);
+  line.appendChild(body);
   logEl.appendChild(line);
   logEl.scrollTop = logEl.scrollHeight;
 }
@@ -107,8 +121,7 @@ function updateClock() {
   const now = new Date();
   clockTimeEl.textContent = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
   clockDateEl.textContent = now
-    .toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', weekday: 'long' })
-    .toUpperCase();
+    .toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', weekday: 'long' });
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -181,19 +194,19 @@ function sendBrowserLocation() {
 }
 
 socket.addEventListener('open', () => {
-  statusEl.textContent = 'ONLINE';
+  statusEl.textContent = 'bağlandı';
   statusEl.classList.add('online');
   statusEl.classList.remove('error');
   liveBadge.classList.remove('offline');
   sendBrowserLocation();
 });
 socket.addEventListener('close', () => {
-  statusEl.textContent = 'CONNECTING';
+  statusEl.textContent = 'bağlanıyor';
   statusEl.classList.remove('online');
   liveBadge.classList.add('offline');
 });
 socket.addEventListener('error', () => {
-  statusEl.textContent = 'CONNECTING';
+  statusEl.textContent = 'bağlantı hatası';
   statusEl.classList.remove('online');
   statusEl.classList.add('error');
   liveBadge.classList.add('offline');
@@ -222,6 +235,8 @@ socket.addEventListener('message', (event) => {
     updateSystemInfo(msg.data);
   } else if (msg.type === 'weather_info') {
     updateWeather(msg.data);
+  } else if (msg.type === 'tts_failed') {
+    speakWithBrowserFallback(msg.text);
   }
 });
 
@@ -237,7 +252,7 @@ form.addEventListener('submit', (event) => {
 
 pauseBtn.addEventListener('click', () => {
   paused = !paused;
-  pauseBtn.textContent = paused ? 'RESUME' : 'PAUSE';
+  pauseBtn.textContent = paused ? 'devam et' : 'duraklat';
   orbRenderer.setPaused(paused);
 });
 
@@ -377,7 +392,11 @@ async function loadSettingsForm() {
     window.jarvisShell.getLaunchOnStartup(),
   ]);
   settingsGeminiKey.value = settings.GEMINI_API_KEY || '';
-  settingsVoice.value = settings.JARVIS_GEMINI_VOICE || '';
+  // Elle düzenlenmiş bir .env, tam Azure ses kimliğini (örn.
+  // "tr-TR-AhmetNeural") ya da geçersiz bir değer bırakmış olabilir — bu
+  // durumda dropdown sessizce boş görünmesin, bilinen bir varsayılana düşsün.
+  const validVoices = ['Ahmet', 'Emel'];
+  settingsVoice.value = validVoices.includes(settings.JARVIS_TTS_VOICE) ? settings.JARVIS_TTS_VOICE : 'Ahmet';
   settingsModel.value = settings.JARVIS_GEMINI_MODEL || '';
   settingsWeatherLocation.value = settings.JARVIS_WEATHER_LOCATION || '';
   settingsReportProjects.value = settings.JARVIS_REPORT_PROJECTS || '';
@@ -447,7 +466,7 @@ settingsLaunchOnStartup.addEventListener('change', () => {
 settingsSave.addEventListener('click', () => {
   window.jarvisShell.saveSettings({
     GEMINI_API_KEY: settingsGeminiKey.value,
-    JARVIS_GEMINI_VOICE: settingsVoice.value,
+    JARVIS_TTS_VOICE: settingsVoice.value,
     JARVIS_GEMINI_MODEL: settingsModel.value,
     JARVIS_WEATHER_LOCATION: settingsWeatherLocation.value,
     JARVIS_REPORT_PROJECTS: settingsReportProjects.value,
@@ -461,6 +480,13 @@ settingsSave.addEventListener('click', () => {
 window.jarvisShell.onAgentLog((entry) => {
   if (!debugPanel.classList.contains('hidden')) appendDebugLine(entry);
 });
+
+function speakWithBrowserFallback(text) {
+  if (!('speechSynthesis' in window) || !text) return;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'tr-TR';
+  window.speechSynthesis.speak(utterance);
+}
 
 const UPDATE_STATUS_TEXT = {
   checking: 'güncelleme kontrol ediliyor...',

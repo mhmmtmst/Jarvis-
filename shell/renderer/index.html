@@ -6,44 +6,42 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <canvas id="bg-canvas"></canvas>
-
   <header class="hud-top">
-    <span id="connection-status" class="status-pill">CONNECTING</span>
-    <span id="wake-indicator" class="wake-indicator">ASİSTAN DİNLİYOR</span>
+    <span id="connection-status" class="status-pill">bağlanıyor</span>
+    <span id="wake-indicator" class="wake-indicator">asistan dinliyor</span>
     <button id="debug-toggle" type="button" class="debug-toggle">DEBUG</button>
   </header>
 
   <main class="hud-grid">
     <section class="hud-left">
       <div class="hud-panel widget-clock">
-        <h2 class="panel-title">TIME</h2>
+        <h2 class="panel-title">Saat</h2>
         <div id="clock-time" class="clock-time">--:--</div>
         <div id="clock-date" class="clock-date">-- ------ ----</div>
       </div>
       <div class="hud-panel widget-weather">
-        <h2 class="panel-title">WEATHER</h2>
+        <h2 class="panel-title">Hava durumu</h2>
         <div id="weather-body" class="weather-placeholder">Hava durumu aranıyor...</div>
       </div>
       <div class="hud-panel widget-system">
-        <h2 class="panel-title">SYSTEM STATUS</h2>
+        <h2 class="panel-title">Sistem</h2>
         <div class="bar-row">
-          <span>CPU</span>
+          <span>cpu</span>
           <div class="bar"><div id="bar-cpu" class="bar-fill"></div></div>
           <span id="pct-cpu" class="bar-pct">--%</span>
         </div>
         <div class="bar-row">
-          <span>RAM</span>
+          <span>ram</span>
           <div class="bar"><div id="bar-ram" class="bar-fill"></div></div>
           <span id="pct-ram" class="bar-pct">--%</span>
         </div>
         <div class="bar-row">
-          <span>DISK</span>
+          <span>disk</span>
           <div class="bar"><div id="bar-disk" class="bar-fill"></div></div>
           <span id="pct-disk" class="bar-pct">--%</span>
         </div>
         <div class="bar-row">
-          <span>BATTERY</span>
+          <span>pil</span>
           <div class="bar"><div id="bar-battery" class="bar-fill"></div></div>
           <span id="pct-battery" class="bar-pct">--%</span>
         </div>
@@ -52,14 +50,13 @@
 
     <section id="hud-center" class="hud-center" data-state="idle">
       <div class="hero-title">
-        <div class="hero-wordmark">J.A.R.V.I.S</div>
-        <div class="hero-tagline">YAPAY ZEKA SES ASİSTANI</div>
+        <div class="hero-wordmark">Jarvis</div>
+        <div class="hero-tagline">yapay zeka ses asistanı</div>
       </div>
       <div class="orb-wrap">
         <canvas id="orb-canvas"></canvas>
       </div>
-      <div class="wordmark">J.A.R.V.I.S</div>
-      <div id="agent-state" class="agent-state">idle</div>
+      <div id="agent-state" class="agent-state">boşta</div>
       <div class="hud-controls">
         <span id="live-badge" class="control-btn control-live">
           <span class="btn-icon">
@@ -69,7 +66,7 @@
               <line x1="8" y1="12.2" x2="8" y2="14.6"/>
               <line x1="5.3" y1="14.6" x2="10.7" y2="14.6"/>
             </svg>
-          </span>LIVE
+          </span>canlı
         </span>
         <button id="btn-pause" type="button" class="control-btn">
           <span class="btn-icon">
@@ -77,7 +74,7 @@
               <rect x="3.3" y="1.5" width="3.6" height="13" rx="1"/>
               <rect x="9.1" y="1.5" width="3.6" height="13" rx="1"/>
             </svg>
-          </span>PAUSE
+          </span>duraklat
         </button>
         <button id="btn-shutdown" type="button" class="control-btn control-danger">
           <span class="btn-icon">
@@ -85,20 +82,20 @@
               <path d="M8 1.2v6.3"/>
               <path d="M3.9 3.6a6.1 6.1 0 1 0 8.2 0"/>
             </svg>
-          </span>SHUTDOWN
+          </span>kapat
         </button>
       </div>
     </section>
 
     <section class="hud-panel hud-right">
       <div class="panel-title-row">
-        <h2 class="panel-title">CONVERSATION</h2>
+        <h2 class="panel-title">Konuşma</h2>
         <div id="wave-bars" class="wave-bars"></div>
       </div>
       <div id="conversation-log" class="conversation-log"></div>
       <form id="command-form" class="command-form">
         <input id="command-input" type="text" autocomplete="off" placeholder="Bir komut yaz..." />
-        <button type="submit">SEND</button>
+        <button type="submit">Gönder</button>
       </form>
     </section>
   </main>
@@ -123,15 +120,8 @@
       <label class="settings-field">
         <span>SES</span>
         <select id="settings-voice">
-          <option value="">—</option>
-          <option value="Charon">Charon</option>
-          <option value="Puck">Puck</option>
-          <option value="Aoede">Aoede</option>
-          <option value="Kore">Kore</option>
-          <option value="Fenrir">Fenrir</option>
-          <option value="Leda">Leda</option>
-          <option value="Orus">Orus</option>
-          <option value="Zephyr">Zephyr</option>
+          <option value="Ahmet">Ahmet</option>
+          <option value="Emel">Emel</option>
         </select>
       </label>
       <label class="settings-field">
@@ -169,8 +159,8 @@
   </div>
 
   <script src="protocol.js"></script>
-  <script src="bg.js"></script>
   <script src="orb.js"></script>
+  <script src="state-labels.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

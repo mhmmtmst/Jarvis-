@@ -16,3 +16,6 @@ shell/release/
 
 # OS
 Thumbs.db
+
+# Superpowers scratch (brainstorm mockups, SDD workspaces)
+.superpowers/

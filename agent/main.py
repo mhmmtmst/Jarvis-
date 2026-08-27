@@ -30,12 +30,12 @@ def build_components() -> tuple[JarvisServer, LiveSession, WakeWordListener]:
         host=config.ws_host,
         port=config.ws_port,
         weather_default_location=config.weather_location,
+        tts_voice=config.tts_voice,
     )
 
     live_session = LiveSession(
         client=client,
         model=config.gemini_model,
-        voice=config.gemini_voice,
         tools=tools,
         on_event=server.handle_live_event,
         mode=config.mode,

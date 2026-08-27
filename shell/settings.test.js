@@ -27,16 +27,16 @@ test('updateEnvFile replaces an existing key in place, preserving order and comm
   const text = [
     '# yorum',
     'GEMINI_API_KEY=abc123',
-    'JARVIS_GEMINI_VOICE=Kore',
+    'JARVIS_TTS_VOICE=Kore',
     'JARVIS_WS_PORT=8765',
   ].join('\n');
 
-  const result = updateEnvFile(text, { JARVIS_GEMINI_VOICE: 'Charon' });
+  const result = updateEnvFile(text, { JARVIS_TTS_VOICE: 'Charon' });
 
   assert.equal(result, [
     '# yorum',
     'GEMINI_API_KEY=abc123',
-    'JARVIS_GEMINI_VOICE=Charon',
+    'JARVIS_TTS_VOICE=Charon',
     'JARVIS_WS_PORT=8765',
   ].join('\n'));
 });
@@ -44,9 +44,9 @@ test('updateEnvFile replaces an existing key in place, preserving order and comm
 test('updateEnvFile appends a key that does not exist yet in the file', () => {
   const text = 'GEMINI_API_KEY=abc123';
 
-  const result = updateEnvFile(text, { JARVIS_GEMINI_VOICE: 'Charon' });
+  const result = updateEnvFile(text, { JARVIS_TTS_VOICE: 'Charon' });
 
-  assert.equal(result, 'GEMINI_API_KEY=abc123\nJARVIS_GEMINI_VOICE=Charon');
+  assert.equal(result, 'GEMINI_API_KEY=abc123\nJARVIS_TTS_VOICE=Charon');
 });
 
 test('updateEnvFile handles multiple updates in one call, mixing replace and append', () => {
@@ -61,8 +61,8 @@ test('updateEnvFile handles multiple updates in one call, mixing replace and app
 });
 
 test('updateEnvFile on an empty starting file just appends all updates', () => {
-  const result = updateEnvFile('', { JARVIS_GEMINI_VOICE: 'Charon' });
-  assert.equal(result, 'JARVIS_GEMINI_VOICE=Charon');
+  const result = updateEnvFile('', { JARVIS_TTS_VOICE: 'Charon' });
+  assert.equal(result, 'JARVIS_TTS_VOICE=Charon');
 });
 
 const { resolveEnvPath, MANAGED_KEYS } = require('./settings');
@@ -75,11 +75,15 @@ test('MANAGED_KEYS includes JARVIS_MODE', () => {
   assert.ok(MANAGED_KEYS.includes('JARVIS_MODE'));
 });
 
+test('MANAGED_KEYS includes JARVIS_TTS_VOICE', () => {
+  assert.ok(MANAGED_KEYS.includes('JARVIS_TTS_VOICE'));
+});
+
 test('readSettings picks up GEMINI_API_KEY from the .env text via parseEnvFile/updateEnvFile round trip', () => {
-  const text = 'GEMINI_API_KEY=secret-abc\nJARVIS_GEMINI_VOICE=Kore';
+  const text = 'GEMINI_API_KEY=secret-abc\nJARVIS_TTS_VOICE=Kore';
   assert.deepEqual(parseEnvFile(text), {
     GEMINI_API_KEY: 'secret-abc',
-    JARVIS_GEMINI_VOICE: 'Kore',
+    JARVIS_TTS_VOICE: 'Kore',
   });
 });
 

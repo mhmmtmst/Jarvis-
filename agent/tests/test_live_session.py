@@ -60,45 +60,97 @@ def make_server_content(
     turn_complete=False,
     interrupted=False,
     input_transcription=None,
-    output_transcription=None,
 ):
     return SimpleNamespace(
         model_turn=model_turn,
         turn_complete=turn_complete,
         interrupted=interrupted,
         input_transcription=input_transcription,
-        output_transcription=output_transcription,
     )
 
 
-def test_run_connects_with_configured_model_and_voice():
+def test_run_connects_with_configured_model_and_uses_text_modality():
     session = FakeSession(messages=[])
     client = FakeClient(session)
     async def on_event(event):
         pass
 
-    live = LiveSession(client=client, model="gemini-live-2.5-flash-preview", voice="Kore", tools={}, on_event=on_event)
+    live = LiveSession(client=client, model="gemini-live-2.5-flash-preview", tools={}, on_event=on_event)
     asyncio.run(live.run())
 
     assert client.aio.live.connect_calls[0]["model"] == "gemini-live-2.5-flash-preview"
     config = client.aio.live.connect_calls[0]["config"]
-    assert config.speech_config.voice_config.prebuilt_voice_config.voice_name == "Kore"
+    assert config.response_modalities == ["TEXT"]
     assert config.realtime_input_config.automatic_activity_detection.disabled is True
 
 
-def test_run_emits_agent_transcript_and_turn_complete():
-    content = make_server_content(output_transcription=SimpleNamespace(text="merhaba"), turn_complete=True)
+def test_run_emits_agent_transcript_from_model_turn_text_and_turn_complete():
+    part = SimpleNamespace(text="merhaba")
+    content = make_server_content(model_turn=SimpleNamespace(parts=[part]), turn_complete=True)
     session = FakeSession(messages=[make_message(server_content=content)])
     client = FakeClient(session)
     events = []
     async def on_event(event):
         events.append(event)
 
-    live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
+    live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
     asyncio.run(live.run())
 
     assert {"type": "transcript", "role": "agent", "text": "merhaba"} in events
+    assert {"type": "agent_text_complete", "text": "merhaba"} in events
     assert {"type": "turn_complete"} in events
+
+
+def test_run_accumulates_multiple_text_parts_into_single_agent_text_complete():
+    part1 = SimpleNamespace(text="merhaba, ")
+    part2 = SimpleNamespace(text="nasılsın?")
+    content = make_server_content(model_turn=SimpleNamespace(parts=[part1, part2]), turn_complete=True)
+    session = FakeSession(messages=[make_message(server_content=content)])
+    client = FakeClient(session)
+    events = []
+    async def on_event(event):
+        events.append(event)
+
+    live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
+    asyncio.run(live.run())
+
+    assert {"type": "agent_text_complete", "text": "merhaba, nasılsın?"} in events
+
+
+def test_run_does_not_emit_agent_text_complete_when_turn_has_no_text():
+    content = make_server_content(turn_complete=True)
+    session = FakeSession(messages=[make_message(server_content=content)])
+    client = FakeClient(session)
+    events = []
+    async def on_event(event):
+        events.append(event)
+
+    live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
+    asyncio.run(live.run())
+
+    assert not any(e["type"] == "agent_text_complete" for e in events)
+    assert {"type": "turn_complete"} in events
+
+
+def test_run_resets_accumulated_text_between_turns():
+    part_a = SimpleNamespace(text="ilk tur")
+    content_a = make_server_content(model_turn=SimpleNamespace(parts=[part_a]), turn_complete=True)
+    part_b = SimpleNamespace(text="ikinci tur")
+    content_b = make_server_content(model_turn=SimpleNamespace(parts=[part_b]), turn_complete=True)
+    session = FakeSession(messages=[make_message(server_content=content_a), make_message(server_content=content_b)])
+    client = FakeClient(session)
+    events = []
+    async def on_event(event):
+        events.append(event)
+
+    live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
+    asyncio.run(live.run())
+
+    text_complete_events = [e for e in events if e["type"] == "agent_text_complete"]
+    assert text_complete_events == [
+        {"type": "agent_text_complete", "text": "ilk tur"},
+        {"type": "agent_text_complete", "text": "ikinci tur"},
+    ]
 
 
 def test_run_emits_user_transcript_from_input_transcription():
@@ -109,7 +161,7 @@ def test_run_emits_user_transcript_from_input_transcription():
     async def on_event(event):
         events.append(event)
 
-    live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
+    live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
     asyncio.run(live.run())
 
     assert {"type": "transcript", "role": "user", "text": "saat kaç"} in events
@@ -123,7 +175,7 @@ def test_run_does_not_emit_turn_complete_when_false():
     async def on_event(event):
         events.append(event)
 
-    live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
+    live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
     asyncio.run(live.run())
 
     assert {"type": "turn_complete"} not in events
@@ -136,7 +188,7 @@ def test_send_text_sends_client_content_with_user_role():
         async def on_event(event):
             pass
 
-        live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
+        live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
         run_task = asyncio.create_task(live.run())
         await asyncio.sleep(0)
 
@@ -159,7 +211,7 @@ def test_send_audio_chunk_sends_pcm_blob_with_correct_mime_type():
         async def on_event(event):
             pass
 
-        live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
+        live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
         run_task = asyncio.create_task(live.run())
         await asyncio.sleep(0)
 
@@ -184,38 +236,6 @@ def test_send_audio_chunk_sends_pcm_blob_with_correct_mime_type():
     asyncio.run(scenario())
 
 
-def test_run_emits_audio_chunk_event_from_model_turn_inline_data():
-    inline_part = SimpleNamespace(inline_data=SimpleNamespace(data=b"\xaa\xbb"))
-    turn = SimpleNamespace(parts=[inline_part])
-    content = make_server_content(model_turn=turn)
-    session = FakeSession(messages=[make_message(server_content=content)])
-    client = FakeClient(session)
-    events = []
-    async def on_event(event):
-        events.append(event)
-
-    live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
-    asyncio.run(live.run())
-
-    assert {"type": "audio_chunk", "data": b"\xaa\xbb"} in events
-
-
-def test_run_ignores_model_turn_parts_without_inline_data():
-    text_part = SimpleNamespace(inline_data=None)
-    turn = SimpleNamespace(parts=[text_part])
-    content = make_server_content(model_turn=turn)
-    session = FakeSession(messages=[make_message(server_content=content)])
-    client = FakeClient(session)
-    events = []
-    async def on_event(event):
-        events.append(event)
-
-    live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
-    asyncio.run(live.run())
-
-    assert not any(e["type"] == "audio_chunk" for e in events)
-
-
 from agent.tools.registry import ToolSpec
 
 
@@ -238,7 +258,7 @@ def test_run_executes_tool_handler_and_sends_function_response():
         pass
 
     tool = make_tool(result={"status": "ok", "cpu_percent": 5})
-    live = LiveSession(client=client, model="m", voice="Kore", tools={"get_system_info": tool}, on_event=on_event)
+    live = LiveSession(client=client, model="m", tools={"get_system_info": tool}, on_event=on_event)
     asyncio.run(live.run())
 
     kind, function_responses = session.sent[0]
@@ -265,7 +285,7 @@ def test_run_passes_call_args_to_handler():
         pass
 
     tool = make_tool(name="open_app", handler=handler)
-    live = LiveSession(client=client, model="m", voice="Kore", tools={"open_app": tool}, on_event=on_event)
+    live = LiveSession(client=client, model="m", tools={"open_app": tool}, on_event=on_event)
     asyncio.run(live.run())
 
     assert received_args == {"isim": "not defteri"}
@@ -279,7 +299,7 @@ def test_run_reports_error_for_unknown_tool_without_calling_any_handler():
     async def on_event(event):
         pass
 
-    live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
+    live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
     asyncio.run(live.run())
 
     _, function_responses = session.sent[0]
@@ -294,7 +314,7 @@ def test_run_emits_interrupted_event():
     async def on_event(event):
         events.append(event)
 
-    live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
+    live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
     asyncio.run(live.run())
 
     assert {"type": "interrupted"} in events
@@ -308,7 +328,7 @@ def test_run_does_not_emit_interrupted_when_false():
     async def on_event(event):
         events.append(event)
 
-    live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
+    live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
     asyncio.run(live.run())
 
     assert {"type": "interrupted"} not in events
@@ -326,7 +346,7 @@ def test_run_handles_exception_from_tool_handler_without_crashing_session():
         pass
 
     tool = make_tool(name="run_command", handler=handler)
-    live = LiveSession(client=client, model="m", voice="Kore", tools={"run_command": tool}, on_event=on_event)
+    live = LiveSession(client=client, model="m", tools={"run_command": tool}, on_event=on_event)
     asyncio.run(live.run())
 
     kind, function_responses = session.sent[0]
@@ -348,7 +368,7 @@ def test_run_handles_exception_from_unexpected_handler_kwarg_without_crashing_se
         pass
 
     tool = make_tool(name="open_browser", handler=handler)
-    live = LiveSession(client=client, model="m", voice="Kore", tools={"open_browser": tool}, on_event=on_event)
+    live = LiveSession(client=client, model="m", tools={"open_browser": tool}, on_event=on_event)
     asyncio.run(live.run())
 
     kind, function_responses = session.sent[0]
@@ -365,7 +385,7 @@ def test_run_connects_with_jarvis_persona_as_system_instruction_when_memory_empt
         pass
 
     live = LiveSession(
-        client=client, model="m", voice="Kore", tools={}, on_event=on_event,
+        client=client, model="m", tools={}, on_event=on_event,
         memory_loader=lambda: {},
     )
     asyncio.run(live.run())
@@ -384,7 +404,7 @@ def test_run_appends_formatted_memory_to_system_instruction_when_present():
 
     memory = {"identity": {"isim": {"value": "Muhammet", "timestamp": "x"}}}
     live = LiveSession(
-        client=client, model="m", voice="Kore", tools={}, on_event=on_event,
+        client=client, model="m", tools={}, on_event=on_event,
         memory_loader=lambda: memory,
     )
     asyncio.run(live.run())
@@ -403,7 +423,7 @@ def test_run_uses_work_mode_persona_when_mode_is_calisma():
         pass
 
     live = LiveSession(
-        client=client, model="m", voice="Kore", tools={}, on_event=on_event,
+        client=client, model="m", tools={}, on_event=on_event,
         memory_loader=lambda: {}, mode="calisma",
     )
     asyncio.run(live.run())
@@ -419,7 +439,7 @@ def test_run_emits_session_ready_event_after_connecting():
     async def on_event(event):
         events.append(event)
 
-    live = LiveSession(client=client, model="m", voice="Kore", tools={}, on_event=on_event)
+    live = LiveSession(client=client, model="m", tools={}, on_event=on_event)
     asyncio.run(live.run())
 
     assert {"type": "session_ready"} in events
@@ -431,7 +451,7 @@ def test_run_logs_when_live_session_connects(caplog):
     async def on_event(event):
         pass
 
-    live = LiveSession(client=client, model="gemini-test-model", voice="Kore", tools={}, on_event=on_event)
+    live = LiveSession(client=client, model="gemini-test-model", tools={}, on_event=on_event)
 
     with caplog.at_level(logging.INFO):
         asyncio.run(live.run())

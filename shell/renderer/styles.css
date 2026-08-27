@@ -1,20 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
-
 :root {
-  --bg: #020c0c;
-  --panel-bg: #030f0f;
-  --pri: #00d4c0;
-  --mid: #006a62;
-  --dim: #0a2a28;
-  --dimmer: #061414;
-  --text: #7dfff6;
-  --green: #00ff88;
-  --red: #ff3344;
-  --muted: #cc2255;
-  --blue: #4488ff;
-  --gold: #ffcc00;
-  --org: #ff6600;
-  --org2: #ff9900;
+  --bg: #121214;
+  --panel-bg: #1a1a1d;
+  --panel-border: #26262a;
+  --pri: #6b6bf5;
+  --text: #e4e4e7;
+  --text-dim: #9a9aa2;
+  --text-faint: #6a6a72;
+  --green: #6b6bf5;
+  --gold: #d9b46a;
+  --org: #d9b46a;
+  --blue: #7ec8e3;
+  --red: #e2685f;
 
   --state-color: var(--green);
 }
@@ -26,38 +22,20 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Consolas', 'Cascadia Code', monospace;
+  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
   overflow: hidden;
 }
 
-.display-font {
-  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
-  font-weight: 700;
-}
-
-#bg-canvas {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.hud-top, .hud-grid, .hud-controls {
-  position: relative;
-  z-index: 1;
-}
-
-.hud-top { display: flex; justify-content: flex-end; align-items: center; padding: 12px 24px; }
+.hud-top { display: flex; justify-content: flex-end; align-items: center; padding: 12px 24px; gap: 10px; }
 
 .status-pill {
-  border: 1px solid var(--mid);
-  color: var(--pri);
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
   padding: 4px 12px;
-  border-radius: 2px;
+  border-radius: 6px;
   font-size: 11px;
-  letter-spacing: 2px;
-  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
-  font-weight: 600;
+  letter-spacing: 0.3px;
+  font-weight: 500;
   transition: color 0.3s ease, border-color 0.3s ease;
 }
 .status-pill.online { color: var(--green); border-color: var(--green); }
@@ -71,53 +49,37 @@ html, body {
   height: calc(100% - 60px);
 }
 
-/* ── Bracket-cornered HUD card (ui.py _bracket portu) ──────────────────── */
 .hud-panel {
-  position: relative;
   background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
   padding: 18px 16px 16px;
   overflow: hidden;
 }
-
-.hud-panel::before,
-.hud-panel::after {
-  content: "";
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border-color: var(--mid);
-  transition: border-color 0.3s ease;
-}
-.hud-panel::before { top: 0; left: 0; border-top: 2px solid; border-left: 2px solid; }
-.hud-panel::after { bottom: 0; right: 0; border-bottom: 2px solid; border-right: 2px solid; }
 
 .hud-left { display: flex; flex-direction: column; gap: 14px; }
 .hud-left .widget-system { flex: 1; }
 
 .panel-title {
-  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: var(--pri);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text-dim);
   margin: 0 0 10px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--dim);
+  border-bottom: 1px solid var(--panel-border);
 }
-.widget-clock .panel-title { color: var(--gold); }
 
 .clock-time {
-  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
   font-size: 40px;
-  font-weight: 700;
-  color: var(--gold);
-  letter-spacing: 1px;
+  font-weight: 600;
+  color: var(--text);
 }
-.clock-date { font-size: 11px; opacity: 0.75; letter-spacing: 1px; color: var(--text); margin-top: 4px; }
+.clock-date { font-size: 11px; opacity: 0.75; letter-spacing: 0.3px; color: var(--text-dim); margin-top: 4px; }
 
 .bar-row { display: flex; align-items: center; gap: 8px; font-size: 11px; margin-bottom: 9px; }
-.bar-row span:first-child { color: var(--mid); width: 46px; flex-shrink: 0; }
-.bar { flex: 1; height: 6px; background: var(--dimmer); border-radius: 0; overflow: hidden; }
+.bar-row span:first-child { color: var(--text-dim); width: 46px; flex-shrink: 0; }
+.bar { flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
 .bar-fill { height: 100%; width: 0%; background: var(--pri); transition: width 0.4s ease, background 0.3s ease; }
 .bar-pct { width: 34px; text-align: right; opacity: 0.9; font-variant-numeric: tabular-nums; color: var(--pri); }
 
@@ -143,17 +105,15 @@ html, body {
   text-align: center;
 }
 .hero-wordmark {
-  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 10px;
-  color: var(--pri);
-  text-shadow: 0 0 16px rgba(0, 212, 192, 0.35);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--text);
 }
 .hero-tagline {
-  font-size: 10px;
-  letter-spacing: 3px;
-  color: var(--mid);
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  color: var(--text-faint);
   margin-top: 4px;
 }
 
@@ -165,21 +125,11 @@ html, body {
 }
 #orb-canvas { width: 100%; height: 100%; display: block; }
 
-.wordmark {
-  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 8px;
-  color: var(--state-color);
-  transition: color 0.4s ease;
-}
 .agent-state {
-  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 3px;
-  opacity: 0.75;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  opacity: 0.85;
   color: var(--state-color);
   transition: color 0.4s ease;
 }
@@ -192,7 +142,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--dim);
+  border-bottom: 1px solid var(--panel-border);
   margin-bottom: 10px;
 }
 
@@ -205,64 +155,53 @@ html, body {
 .wave-bars span {
   width: 2px;
   height: 3px;
-  background: var(--mid);
+  background: var(--text-faint);
   transition: height 0.12s ease, background 0.3s ease;
 }
 .wave-bars.active span { background: var(--pri); }
-.conversation-log { flex: 1; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
-.conversation-log .entry-user { color: var(--text); }
-.conversation-log .entry-jarvis { color: var(--pri); }
-.conversation-log .entry-error { color: var(--red); }
+.conversation-log { flex: 1; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; padding-right: 4px; }
+.log-line { padding: 8px 0; border-bottom: 1px solid var(--panel-border); }
+.log-line:last-child { border-bottom: none; }
+.log-speaker { font-size: 10px; color: var(--text-faint); margin-bottom: 3px; }
+.log-line.entry-user .log-speaker { color: var(--pri); }
+.log-text { color: var(--text); }
+.log-line.entry-error .log-text { color: var(--red); }
 
 .command-form { display: flex; gap: 8px; margin-top: 12px; }
 .command-form input {
   flex: 1;
-  background: var(--dimmer);
-  border: 1px solid var(--mid);
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
   color: var(--text);
   padding: 8px 10px;
-  border-radius: 2px;
+  border-radius: 8px;
   font-family: inherit;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 .command-form input:focus {
   outline: none;
   border-color: var(--pri);
-  box-shadow: 0 0 0 1px var(--pri), 0 0 12px rgba(0, 212, 192, 0.25);
 }
 
 .command-form button, .control-btn {
-  position: relative;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, currentColor 16%, transparent), color-mix(in srgb, currentColor 4%, transparent));
-  border: 1px solid color-mix(in srgb, currentColor 55%, transparent);
-  border-top-color: color-mix(in srgb, currentColor 80%, white 10%);
-  color: var(--pri);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
   padding: 8px 14px;
-  border-radius: 3px;
-  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
-  font-weight: 600;
-  letter-spacing: 1.5px;
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
   cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, currentColor 35%, transparent),
-    inset 0 -10px 16px -10px color-mix(in srgb, currentColor 25%, transparent),
-    0 2px 6px rgba(0, 0, 0, 0.4);
-  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.1s ease;
 }
 .command-form button:hover, .control-btn:hover {
-  border-color: currentColor;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, currentColor 28%, transparent), color-mix(in srgb, currentColor 8%, transparent));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, currentColor 50%, transparent),
-    inset 0 -10px 18px -10px color-mix(in srgb, currentColor 35%, transparent),
-    0 0 14px color-mix(in srgb, currentColor 45%, transparent);
+  border-color: var(--text-faint);
+  background: #202024;
 }
 .command-form button:active, .control-btn:active {
   transform: translateY(1px);
 }
-.control-btn.control-danger { border-color: color-mix(in srgb, var(--red) 55%, transparent); color: var(--red); }
+.control-btn.control-danger { border-color: color-mix(in srgb, var(--red) 40%, var(--panel-border)); color: var(--red); }
 
 .hud-controls { display: flex; justify-content: center; gap: 12px; margin-top: 6px; }
 .hud-controls .control-btn { padding: 6px 12px; font-size: 11px; }
@@ -280,36 +219,33 @@ html, body {
   display: inline-flex;
   align-items: center;
   margin-right: 7px;
-  filter: drop-shadow(0 0 3px currentColor);
   flex-shrink: 0;
 }
 .control-live .btn-icon { animation: icon-pulse 1.6s ease-in-out infinite; }
 .control-live.offline .btn-icon { animation: none; }
 
 @keyframes icon-pulse {
-  0%, 100% { opacity: 1; filter: drop-shadow(0 0 3px currentColor); }
-  50% { opacity: 0.4; filter: drop-shadow(0 0 1px currentColor); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 .weather-placeholder {
   font-size: 11px;
-  color: var(--mid);
+  color: var(--text-faint);
   font-style: italic;
   padding: 8px 0;
 }
 
 .weather-temp {
-  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
   font-size: 30px;
-  font-weight: 700;
-  color: var(--blue);
+  font-weight: 600;
+  color: var(--text);
 }
 .weather-city {
   font-size: 10px;
-  letter-spacing: 1px;
-  color: var(--mid);
+  letter-spacing: 0.3px;
+  color: var(--text-dim);
   margin-top: 2px;
-  text-transform: uppercase;
 }
 .weather-condition {
   font-size: 12px;
@@ -326,17 +262,16 @@ html, body {
 .wake-indicator {
   opacity: 0.3;
   font-size: 0.7rem;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   margin-left: 0.75rem;
   color: var(--green);
   transition: opacity 0.2s ease;
 }
 .wake-indicator.active {
   opacity: 1;
-  text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
 }
 
-/* ── Durum -> renk. hud-center'a yazilir, wordmark/agent-state buradan
+/* Durum -> renk. hud-center'a yazilir, wordmark/agent-state buradan
    miras alir (orb.js kendi ayri paletiyle canvas'i cizer). */
 #hud-center[data-state="idle"] { --state-color: var(--green); }
 #hud-center[data-state="listening"] { --state-color: var(--green); }
@@ -347,8 +282,9 @@ html, body {
 .debug-toggle {
   margin-left: 12px;
   background: transparent;
-  border: 1px solid var(--mid);
-  color: var(--mid);
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+  border-radius: 6px;
   font-size: 11px;
   padding: 3px 8px;
   cursor: pointer;
@@ -361,11 +297,13 @@ html, body {
   right: 16px;
   width: 420px;
   height: 320px;
-  background: #041111;
-  border: 1px solid #0c2a28;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
   z-index: 50;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .debug-panel.hidden {
@@ -377,16 +315,17 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 8px 10px;
-  border-bottom: 1px solid #0c2a28;
+  border-bottom: 1px solid var(--panel-border);
   font-size: 11px;
   letter-spacing: 0.05em;
 }
 
 .debug-panel-header button {
   background: transparent;
-  border: 1px solid #0c2a28;
+  border: 1px solid var(--panel-border);
   color: inherit;
   cursor: pointer;
+  border-radius: 6px;
   font-size: 10px;
   padding: 2px 6px;
   margin-left: 6px;
@@ -396,7 +335,7 @@ html, body {
   flex: 1;
   overflow-y: auto;
   padding: 8px 10px;
-  font-family: monospace;
+  font-family: 'Consolas', 'Cascadia Code', monospace;
   font-size: 11px;
   white-space: pre-wrap;
 }
@@ -429,8 +368,9 @@ html, body {
 
 .debug-panel-header .debug-tab {
   background: transparent;
-  border: 1px solid #0c2a28;
-  color: var(--mid);
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+  border-radius: 6px;
   font-size: 10px;
   padding: 3px 10px;
   cursor: pointer;
@@ -456,13 +396,14 @@ html, body {
   flex-direction: column;
   gap: 4px;
   font-size: 11px;
-  color: var(--mid);
+  color: var(--text-dim);
 }
 
 .settings-field input,
 .settings-field select {
-  background: #041111;
-  border: 1px solid #0c2a28;
+  background: var(--bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
   color: var(--text);
   padding: 4px 6px;
   font-size: 12px;
@@ -473,12 +414,13 @@ html, body {
   align-items: center;
   gap: 8px;
   font-size: 11px;
-  color: var(--mid);
+  color: var(--text-dim);
 }
 
 .settings-save-btn {
   background: transparent;
   border: 1px solid var(--pri);
+  border-radius: 8px;
   color: var(--pri);
   padding: 6px 10px;
   cursor: pointer;
@@ -496,7 +438,7 @@ html, body {
   display: flex;
   justify-content: space-between;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-faint);
   letter-spacing: 0.05em;
 }
 
