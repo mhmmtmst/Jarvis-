@@ -344,6 +344,8 @@ const settingsLaunchOnStartup = document.getElementById('settings-launch-on-star
 const settingsSave = document.getElementById('settings-save');
 const settingsGeminiKey = document.getElementById('settings-gemini-key');
 const settingsFirstrunNote = document.getElementById('settings-firstrun-note');
+const settingsVersionLabel = document.getElementById('settings-version-label');
+const settingsUpdateStatus = document.getElementById('settings-update-status');
 let firstRunLocked = false;
 let debugPanelOpening = false;
 
@@ -455,6 +457,24 @@ settingsSave.addEventListener('click', () => {
 
 window.jarvisShell.onAgentLog((entry) => {
   if (!debugPanel.classList.contains('hidden')) appendDebugLine(entry);
+});
+
+const UPDATE_STATUS_TEXT = {
+  checking: 'güncelleme kontrol ediliyor...',
+  available: (s) => `yeni sürüm indiriliyor: v${s.version}`,
+  downloading: (s) => `indiriliyor: %${s.percent}`,
+  ready: (s) => `v${s.version} hazır — yeniden başlatınca kurulacak`,
+  'up-to-date': '',
+  error: 'güncelleme kontrolü başarısız',
+};
+
+window.jarvisShell.onUpdateStatus((status) => {
+  const text = UPDATE_STATUS_TEXT[status.state];
+  settingsUpdateStatus.textContent = typeof text === 'function' ? text(status) : text || '';
+});
+
+window.jarvisShell.getAppVersion().then((version) => {
+  settingsVersionLabel.textContent = `v${version}`;
 });
 
 checkFirstRunLock();

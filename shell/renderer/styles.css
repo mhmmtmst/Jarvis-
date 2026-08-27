@@ -492,6 +492,14 @@ html, body {
   line-height: 1.5;
 }
 
+.settings-version-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+}
+
 .settings-firstrun-note.hidden {
   display: none;
 }

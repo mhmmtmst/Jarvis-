@@ -14,4 +14,8 @@ contextBridge.exposeInMainWorld('jarvisShell', {
   saveSettings: (values) => ipcRenderer.invoke('jarvis:save-settings', values),
   getLaunchOnStartup: () => ipcRenderer.invoke('jarvis:get-launch-on-startup'),
   setLaunchOnStartup: (value) => ipcRenderer.invoke('jarvis:set-launch-on-startup', value),
+  getAppVersion: () => ipcRenderer.invoke('jarvis:get-app-version'),
+  onUpdateStatus: (callback) => {
+    ipcRenderer.on('update-status', (_event, status) => callback(status));
+  },
 });
