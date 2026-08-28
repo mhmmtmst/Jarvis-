@@ -56,20 +56,20 @@ def make_message(tool_call=None, server_content=None):
 
 
 def make_server_content(
-    model_turn=None,
     turn_complete=False,
     interrupted=False,
     input_transcription=None,
+    output_transcription=None,
 ):
     return SimpleNamespace(
-        model_turn=model_turn,
         turn_complete=turn_complete,
         interrupted=interrupted,
         input_transcription=input_transcription,
+        output_transcription=output_transcription,
     )
 
 
-def test_run_connects_with_configured_model_and_uses_text_modality():
+def test_run_connects_with_configured_model_and_uses_audio_modality():
     session = FakeSession(messages=[])
     client = FakeClient(session)
     async def on_event(event):
@@ -80,13 +80,19 @@ def test_run_connects_with_configured_model_and_uses_text_modality():
 
     assert client.aio.live.connect_calls[0]["model"] == "gemini-live-2.5-flash-preview"
     config = client.aio.live.connect_calls[0]["config"]
-    assert config.response_modalities == ["TEXT"]
+    # response_modalities must stay ["AUDIO"] — some Live models (e.g.
+    # gemini-3.1-flash-live-preview) reject ["TEXT"] outright with a 1007
+    # "requested combination of response modalities not supported" error.
+    # The agent's own generated speech is never played (edge-tts replaces
+    # it); text comes from output_audio_transcription instead.
+    assert config.response_modalities == ["AUDIO"]
+    assert config.output_audio_transcription is not None
     assert config.realtime_input_config.automatic_activity_detection.disabled is True
 
 
-def test_run_emits_agent_transcript_from_model_turn_text_and_turn_complete():
-    part = SimpleNamespace(text="merhaba")
-    content = make_server_content(model_turn=SimpleNamespace(parts=[part]), turn_complete=True)
+def test_run_emits_agent_transcript_from_output_transcription_and_turn_complete():
+    transcription = SimpleNamespace(text="merhaba")
+    content = make_server_content(output_transcription=transcription, turn_complete=True)
     session = FakeSession(messages=[make_message(server_content=content)])
     client = FakeClient(session)
     events = []
@@ -101,11 +107,13 @@ def test_run_emits_agent_transcript_from_model_turn_text_and_turn_complete():
     assert {"type": "turn_complete"} in events
 
 
-def test_run_accumulates_multiple_text_parts_into_single_agent_text_complete():
-    part1 = SimpleNamespace(text="merhaba, ")
-    part2 = SimpleNamespace(text="nasılsın?")
-    content = make_server_content(model_turn=SimpleNamespace(parts=[part1, part2]), turn_complete=True)
-    session = FakeSession(messages=[make_message(server_content=content)])
+def test_run_accumulates_multiple_transcription_chunks_into_single_agent_text_complete():
+    chunk1 = make_server_content(output_transcription=SimpleNamespace(text="merhaba, "), turn_complete=False)
+    chunk2 = make_server_content(output_transcription=SimpleNamespace(text="nasılsın?"), turn_complete=True)
+    session = FakeSession(messages=[
+        make_message(server_content=chunk1),
+        make_message(server_content=chunk2),
+    ])
     client = FakeClient(session)
     events = []
     async def on_event(event):
@@ -133,10 +141,8 @@ def test_run_does_not_emit_agent_text_complete_when_turn_has_no_text():
 
 
 def test_run_resets_accumulated_text_between_turns():
-    part_a = SimpleNamespace(text="ilk tur")
-    content_a = make_server_content(model_turn=SimpleNamespace(parts=[part_a]), turn_complete=True)
-    part_b = SimpleNamespace(text="ikinci tur")
-    content_b = make_server_content(model_turn=SimpleNamespace(parts=[part_b]), turn_complete=True)
+    content_a = make_server_content(output_transcription=SimpleNamespace(text="ilk tur"), turn_complete=True)
+    content_b = make_server_content(output_transcription=SimpleNamespace(text="ikinci tur"), turn_complete=True)
     session = FakeSession(messages=[make_message(server_content=content_a), make_message(server_content=content_b)])
     client = FakeClient(session)
     events = []

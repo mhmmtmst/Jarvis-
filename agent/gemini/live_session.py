@@ -50,13 +50,14 @@ class LiveSession:
             ]
         )
         return types.LiveConnectConfig(
-            response_modalities=["TEXT"],
+            response_modalities=["AUDIO"],
             system_instruction=self._build_system_instruction(),
             tools=[tool],
             realtime_input_config=types.RealtimeInputConfig(
                 automatic_activity_detection=types.AutomaticActivityDetection(disabled=True)
             ),
             input_audio_transcription=types.AudioTranscriptionConfig(),
+            output_audio_transcription=types.AudioTranscriptionConfig(),
         )
 
     async def run(self) -> None:
@@ -100,11 +101,10 @@ class LiveSession:
         if content.input_transcription is not None and content.input_transcription.text:
             await self._on_event({"type": "transcript", "role": "user", "text": content.input_transcription.text})
 
-        if content.model_turn is not None:
-            for part in content.model_turn.parts or []:
-                if part.text:
-                    self._pending_agent_text += part.text
-                    await self._on_event({"type": "transcript", "role": "agent", "text": part.text})
+        if content.output_transcription is not None and content.output_transcription.text:
+            text = content.output_transcription.text
+            self._pending_agent_text += text
+            await self._on_event({"type": "transcript", "role": "agent", "text": text})
 
         if content.turn_complete:
             if self._pending_agent_text:
