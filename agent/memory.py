@@ -3,7 +3,15 @@ import os
 import unicodedata
 from datetime import datetime
 
-_DEFAULT_PATH = os.path.join(os.path.dirname(__file__), "memory.json")
+_SOURCE_TREE_PATH = os.path.join(os.path.dirname(__file__), "memory.json")
+
+
+def _default_path() -> str:
+    """Paketlenmiş (kurulu) uygulamada Electron, `JARVIS_MEMORY_PATH`'i kullanıcının
+    userData klasörüne işaret edecek şekilde ayarlar; böylece hafıza her
+    auto-update'te silinip yeniden yazılan kurulum klasörü yerine kalıcı bir
+    yerde durur. Env var yoksa (dev/test) kaynak ağacındaki eski konum kullanılır."""
+    return os.environ.get("JARVIS_MEMORY_PATH") or _SOURCE_TREE_PATH
 
 
 def _fold_turkish(text: str) -> str:
@@ -12,9 +20,10 @@ def _fold_turkish(text: str) -> str:
     return "".join(ch for ch in text if not unicodedata.combining(ch))
 
 
-def load_memory(path: str = _DEFAULT_PATH) -> dict:
+def load_memory(path: str | None = None) -> dict:
     """Kategori -> {anahtar: {"value":..., "timestamp":...}} şeklinde ham
     hafıza. Dosya yoksa/bozuksa boş sözlük döner, hiçbir zaman hata fırlatmaz."""
+    path = path or _default_path()
     if not os.path.exists(path):
         return {}
     try:
@@ -30,9 +39,10 @@ def _save(path: str, data: dict) -> None:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-def remember(category: str = "notes", key: str = "", value: str = "", path: str = _DEFAULT_PATH) -> dict:
+def remember(category: str = "notes", key: str = "", value: str = "", path: str | None = None) -> dict:
     """Bir bilgiyi kategori/anahtar altında kaydeder; aynı kategori+anahtar
     tekrar verilirse üzerine yazar (yığılan yinelenen kayıt yerine güncelleme)."""
+    path = path or _default_path()
     category = (category or "notes").strip() or "notes"
     key = (key or "").strip()
     value = (value or "").strip()
@@ -45,8 +55,8 @@ def remember(category: str = "notes", key: str = "", value: str = "", path: str 
     return {"status": "ok", "message": f"Hatırlayacağım: {key} = {value}"}
 
 
-def recall(path: str = _DEFAULT_PATH) -> dict:
-    data = load_memory(path)
+def recall(path: str | None = None) -> dict:
+    data = load_memory(path or _default_path())
     items = [
         f"{category}/{key}: {entry.get('value', '')}"
         for category, entries in data.items()
@@ -57,9 +67,10 @@ def recall(path: str = _DEFAULT_PATH) -> dict:
     return {"status": "ok", "items": items}
 
 
-def delete_memory(category: str = "", key: str = "", match_text: str = "", path: str = _DEFAULT_PATH) -> dict:
+def delete_memory(category: str = "", key: str = "", match_text: str = "", path: str | None = None) -> dict:
     """category+key verilirse kesin, match_text verilirse (kategori/anahtar
     bilinmiyorsa) anahtar+değer içinde Türkçe-duyarsız bulanık arama yaparak siler."""
+    path = path or _default_path()
     category = (category or "").strip()
     key = (key or "").strip()
     match_text = (match_text or "").strip()

@@ -77,4 +77,18 @@ function resolveEnvPath({ isPackaged, userDataPath, projectRoot }) {
     : path.join(projectRoot, 'agent', '.env');
 }
 
-module.exports = { MANAGED_KEYS, parseEnvFile, updateEnvFile, readSettings, writeSettings, resolveEnvPath };
+function resolveMemoryPath({ isPackaged, userDataPath, projectRoot }) {
+  return isPackaged
+    ? path.join(userDataPath, 'memory.json')
+    : path.join(projectRoot, 'agent', 'memory.json');
+}
+
+module.exports = {
+  MANAGED_KEYS,
+  parseEnvFile,
+  updateEnvFile,
+  readSettings,
+  writeSettings,
+  resolveEnvPath,
+  resolveMemoryPath,
+};

@@ -65,7 +65,7 @@ test('updateEnvFile on an empty starting file just appends all updates', () => {
   assert.equal(result, 'JARVIS_TTS_VOICE=Charon');
 });
 
-const { resolveEnvPath, MANAGED_KEYS } = require('./settings');
+const { resolveEnvPath, resolveMemoryPath, MANAGED_KEYS } = require('./settings');
 
 test('MANAGED_KEYS includes GEMINI_API_KEY', () => {
   assert.ok(MANAGED_KEYS.includes('GEMINI_API_KEY'));
@@ -103,4 +103,22 @@ test('resolveEnvPath returns the userData path (userDataPath/.env) when packaged
     projectRoot: 'C:/jarvis',
   });
   assert.equal(result, require('path').join('C:/Users/x/AppData/Roaming/Jarvis', '.env'));
+});
+
+test('resolveMemoryPath returns the dev path (projectRoot/agent/memory.json) when not packaged', () => {
+  const result = resolveMemoryPath({
+    isPackaged: false,
+    userDataPath: 'C:/Users/x/AppData/Roaming/Jarvis',
+    projectRoot: 'C:/jarvis',
+  });
+  assert.equal(result, require('path').join('C:/jarvis', 'agent', 'memory.json'));
+});
+
+test('resolveMemoryPath returns the userData path (userDataPath/memory.json) when packaged, so it survives auto-updates', () => {
+  const result = resolveMemoryPath({
+    isPackaged: true,
+    userDataPath: 'C:/Users/x/AppData/Roaming/Jarvis',
+    projectRoot: 'C:/jarvis',
+  });
+  assert.equal(result, require('path').join('C:/Users/x/AppData/Roaming/Jarvis', 'memory.json'));
 });

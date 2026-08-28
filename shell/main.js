@@ -3,7 +3,7 @@ const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
 const { AgentProcessManager } = require('./agent-process');
-const { readSettings, writeSettings, resolveEnvPath } = require('./settings');
+const { readSettings, writeSettings, resolveEnvPath, resolveMemoryPath } = require('./settings');
 
 const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
@@ -40,6 +40,12 @@ const ENV_PATH = resolveEnvPath({
   projectRoot: PROJECT_ROOT,
 });
 
+const MEMORY_PATH = resolveMemoryPath({
+  isPackaged: app.isPackaged,
+  userDataPath: app.getPath('userData'),
+  projectRoot: PROJECT_ROOT,
+});
+
 if (app.isPackaged && !fs.existsSync(ENV_PATH)) {
   fs.mkdirSync(path.dirname(ENV_PATH), { recursive: true });
   fs.copyFileSync(path.join(process.resourcesPath, 'agent', '.env.example'), ENV_PATH);
@@ -51,7 +57,7 @@ const agentManager = new AgentProcessManager({
     : path.join(PROJECT_ROOT, 'agent', 'venv', 'Scripts', 'python.exe'),
   args: app.isPackaged ? [] : ['-m', 'agent.main'],
   cwd: app.isPackaged ? path.join(process.resourcesPath, 'agent') : PROJECT_ROOT,
-  env: { JARVIS_ENV_PATH: ENV_PATH },
+  env: { JARVIS_ENV_PATH: ENV_PATH, JARVIS_MEMORY_PATH: MEMORY_PATH },
 });
 
 function createWindow() {
